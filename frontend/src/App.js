@@ -13,13 +13,18 @@ function App(){
 
 // https://xiubindev.tistory.com/100 
 // 메시지 불러오기 
-    useEffect(() => { //화면이 그려지면 한번 시행 
+    useEffect(() => { //화면이 그려지면 한번 시행
+        
+        //과거 메시지 수신
+        socket.on('chat history', (messages) => { setChat(messages.map((m) => m.message)); });
         socket.on('chat message',(msg) =>{setChat((prevChat) => [...prevChat, msg]);} );  
         //chat message 이벤트 발생시 수행
         //서버에서 전달된 msg를 setchat 호출
         //기존 메시지 배열 복사, 뒤에 msg 연결 
 
-        return () => { socket.off('chat message');}; //중복 등록되지 않도록 제거 
+        return () => { socket.off('chat message');
+                       socket.off('chat history');
+        }; //중복 등록되지 않도록 제거 
     },[]);
 
 
