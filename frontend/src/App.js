@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'; //리엑트 라이브러리
+import React, { useState, useEffect,useRef } from 'react'; //리엑트 라이브러리
+//https://hihiha2.tistory.com/19
 import { io } from 'socket.io-client'; //socket 서버 연결
 
 const socket = io('http://localhost:3001');
@@ -13,12 +14,20 @@ function App(){
     const [user, setuser] = useState(null); 
     const [loginform, setLoginForm] = useState({ username: '', password: '' });
     const [isRegister, setIsRegister] = useState(false); 
+    const [roomid, setRoomid] = useState('room1');
+    const chatendRef = useRef(null);
   
 
 
 
 // https://xiubindev.tistory.com/100 
 // 메시지 불러오기 
+//방 입장시 서버에 표시 
+   useEffect(() => {
+        socket.emit('join room', roomid);
+    }, [roomid]);
+
+
     useEffect(() => { //화면이 그려지면 한번 시행
         
         //과거 메시지 수신
@@ -32,7 +41,7 @@ function App(){
                        socket.off('chat history');
         }; //중복 등록되지 않도록 제거 
     },[]);
-
+    useEffect(() => {chatendRef.current?.scrollIntoView({ behavior: 'smooth' });}, [chat]);
 
 
 
@@ -59,7 +68,7 @@ function App(){
     const sendMessage = (event) =>{ //https://programming119.tistory.com/100
         event.preventDefault(); //submit 되고 창이 돌아오는것을 방지 
         if(message.trim()==='')return;//빈 메시지 방지
-        socket.emit('chat message',{ nickname: user.username, message }); // 입력받은 메시지 비우기 
+        socket.emit('chat message',{ nickname: user.username, message,roomid}); // 입력받은 메시지 비우기, roomid 기능 추가
         setMessage(''); //메시지 비우기 
     };
 
@@ -99,12 +108,19 @@ function App(){
 return(
         <div style={{ padding: '20px', maxWidth: '500px', margin: 'auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2>실시간 채팅</h2>
+            <h2>실시간 채팅- {roomid}</h2> {/*방 이름 추가 */}
             <button onClick={() => setuser(null)} style={{ padding: '6px 10px', fontSize: '12px' }}>
               로그아웃웃
             </button>
-
           </div>
+            <div style={{ marginBottom: '10px' }}>
+                <button onClick={() => setRoomid('room1')} style={{ marginRight: '5px' }}>방 1</button>
+                <button onClick={() => setRoomid('room2')} style={{ marginRight: '5px' }}>방 2</button>
+                <button onClick={() => setRoomid('room3')}>방 3</button>
+            </div>
+
+
+
          <form onSubmit={sendMessage}>
             <input 
              type="text" 
@@ -117,10 +133,18 @@ return(
                 메시지 전송
             </button>
         </form>
-         {/* 채팅 출력 폼, user추가 */}
+         {/* 채팅 출력 폼, user추가 + 자동 스크롤, 메시지 필터링 */}
         <ul style={{ marginTop: '20px' }}>
-        {chat.map((msg, idx) => ( <li key={idx} style={{ marginBottom: '5px' }}> <strong>{msg.nickname}</strong>: {msg.message} </li> ))} {/*닉네임 추가 */}
-        </ul> 
+                {chat
+                    .filter((msg) => msg.roomid === roomid)
+                    .map((msg, idx) => (
+                        <li key={idx} style={{ marginBottom: '5px', textAlign: msg.nickname === user.username ? 'right' : 'left' }}>
+                            <strong>{msg.nickname}</strong>: {msg.message}
+                            <div style={{ fontSize: '10px', color: '#888' }}>{new Date(msg.timestamp).toLocaleTimeString()}</div>
+                        </li>
+                    ))}
+                <div ref={chatendRef} />
+          </ul> 
         </div>
     );
 }

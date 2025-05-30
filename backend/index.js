@@ -40,17 +40,24 @@ app.use('/api/auth', authRoutes); //https://velog.io/@rhftnqls/auth-%EB%AF%B8%EB
 io.on('connection', async(socket) => { //클라이언트가 socket.io로 연결한 경우
     console.log('사용자 연결됨:', socket.id); //연결된 경우 log 
 
-    //기존 메시지 정보 수신
-    const chathistory =await chat.find().sort({ timestamp:1}).limit(50);
-    socket.emit('chat history', chathistory);
-    
 
 
-    // 채팅 메시지 수신
-    socket.on('chat message', async({ nickname, message }) => { //클라이언트가 메시지를 보내는 경우 + nickname도 추가 
-        console.log('받은 메시지:', { nickname, message }); // 서버에 받은 메시지  저장
-        const saved= await chat.create({ nickname, message });
-        io.emit('chat message', { nickname: saved.nickname, message: saved.message }); // 전체 클라이언트에게 메시지 전송 -> 모든 연결된 사용자 
+    //room 기능 추가
+    socket.on('join room',async(roomid)=>{ socket.join(roomid); console.log(`${socket.id}가 방 ${roomid}에 입장`);
+
+
+//해당 room의 데이터 수신
+    const roomhistory = await chat.find({ roomid }).sort({ timestamp: 1 }).limit(50);
+    socket.emit('chat history', roomhistory);
+})
+
+
+    // 채팅 메시지 수신 -> 받은 메시지만만
+    socket.on('chat message', async ({ nickname, message, roomid }) => { //클라이언트가 메시지를 보내는 경우 + nickname도 추가 
+        console.log('받은 메시지:', { nickname, message,roomid}); // 서버에 받은 메시지  저장
+        const saved= await chat.create({ nickname, message, roomid});
+        io.to(roomid).emit('chat message', { nickname: saved.nickname, message: saved.message, timestamp: saved.timestamp,roomid: saved.roomid });
+        //해당 방에 포함된 사용자에게만 전송
     });
 
     socket.on('disconnect', () => { //연결 종료 
@@ -65,3 +72,6 @@ const PORT = 3001;
 server.listen(PORT, () => {
     console.log("서버가 http://localhost:" + PORT + " 에서 실행중");
 });
+
+
+
