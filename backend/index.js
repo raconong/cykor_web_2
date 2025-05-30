@@ -9,6 +9,7 @@ const { Server } = require('socket.io');
 const cors = require('cors'); // cors 상수 저장
 const mongoose=require('mongoose');
 const chat = require('./chatsetting');
+const authRoutes = require('./auth');
 
 //mongodb 연결
 // https://koreankoder.tistory.com/15
@@ -23,8 +24,7 @@ mongoose.connect('mongodb://localhost:27017/chatdb', {
 const app = express(); // 서버에 필요한 기능인 미들웨어를 어플리케이션에 추가 
 const server= http.createServer(app);
 const socketio = require('socket.io'); //https://smaivnn.tistory.com/2
-const { timeStamp } = require('console');
-const authRoutes = require('./auth'); 
+const { timestamp } = require('console');
 const io = new socketio.Server(server, {
     cors: { origin: "*",methods: ['GET', 'POST'] } //모든 출처 허용, get,post 메서드 허용
 });

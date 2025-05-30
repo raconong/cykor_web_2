@@ -16,8 +16,45 @@ function App(){
     const [isRegister, setIsRegister] = useState(false); 
     const [roomid, setRoomid] = useState('room1');
     const chatendRef = useRef(null);
-  
+    const [friendname, setFriendName] = useState(''); //친구추가 입력값 상태
+    const [friends, setFriends] = useState([]);//친구 목록 
 
+//친구 목록 가져오기
+  const fetchFriends = async (u = user) => {
+    if (!u || !u.username) return;
+    const res = await fetch('http://localhost:3001/api/auth/list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u.username })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      setFriends(data.friends);
+    } else {
+      alert(`${data.message}`);
+    }
+  };
+
+
+
+
+  //친구 제거 함수
+  const handleRemoveFriend = async (friendusername) => {
+  const res = await fetch('http://localhost:3001/api/auth/removefriend', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: user.username, friendusername }) //json형태로 사용
+  });
+
+  const data = await res.json();
+  if (res.ok) {
+    alert(`${data.friend} 친구 제거 완료`);
+    fetchFriends(); // 목록 갱신
+  } else {
+    alert(data.message);
+  }
+};
 
 
 // https://xiubindev.tistory.com/100 
@@ -57,7 +94,9 @@ function App(){
 
     const data = await res.json(); //응답 처리 
     if (res.ok) { //응답 성공한 경우 
-      setuser({ username: loginform.username }); // 로그인 성공 시 유저 설정
+          const newUser = { username: loginform.username };
+          setuser(newUser); // user 상태 설정
+          fetchFriends(newUser); // user 값 넘겨주기
     } else {
       alert(data.message);
     }
@@ -72,6 +111,28 @@ function App(){
         setMessage(''); //메시지 비우기 
     };
 
+
+
+  const handleaddfriend = async () => {
+    if (!friendname.trim()) return;//friendname이 공백인 경우 그냥 return
+    const res = await fetch('http://localhost:3001/api/auth/addfriend', { // 친구 추가 api
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({//json형태로 전송 
+        username: user.username,
+        friendusername: friendname
+      })
+    });
+
+    const data = await res.json(); //서버로 받은 값을 data에 저장 
+    if (res.ok) {
+      alert(`${data.friend} 친구추가`);
+      setFriendName('');
+      fetchFriends(); //친구추가 이후 목록 갱신 
+    } else {
+      alert(` ${data.message}`);
+    }
+  };
 
 
 
@@ -117,6 +178,30 @@ return(
                 <button onClick={() => setRoomid('room1')} style={{ marginRight: '5px' }}>방 1</button>
                 <button onClick={() => setRoomid('room2')} style={{ marginRight: '5px' }}>방 2</button>
                 <button onClick={() => setRoomid('room3')}>방 3</button>
+            </div>
+
+            {/*친구추가 세팅*/}
+            <div style={{ marginBottom: '15px' }}>
+              <input type="text" placeholder="친구 아이디 입력" value={friendname} onChange={(e) => setFriendName(e.target.value)} style={{ width: '60%', padding: '6px' }}/>
+              <button onClick={handleaddfriend} style={{ marginLeft: '8px', padding: '6px 10px' }}>
+                친구추가
+              </button>
+              
+            </div>
+
+            {/*친구 목록 */}
+            <div style={{ marginBottom: '20px' }}>
+              <h4>친구 목록</h4>
+              <ul style={{ paddingLeft: '20px' }}>
+                {friends.map((f, i) => ( 
+                  <li key={i}> 
+                  {f} 
+                  <button onClick={() => handleRemoveFriend(f)} style={{ marginLeft: '10px', padding: '2px 6px', fontSize: '12px' }} >
+                     제거 
+                     </button> 
+                     </li> ))}
+              </ul>
+
             </div>
 
 

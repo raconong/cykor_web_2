@@ -27,4 +27,79 @@ router.post('/login', async (req, res) => { //request,response
   res.status(200).json({ message: '로그인 성공', user: { username } }); //로그인 response 전송 
 });
 
+
+
+router.post('/addfriend', async (req, res) => {
+  const { username, friendusername } = req.body;
+  try{
+        const user = await User.findOne({ username }); //사용자자
+        const friend = await User.findOne({ username: friendusername }); //추가하려는 이름
+        if (!user || !friend) {// 둘중 하나가 없는 유저인 경우 
+          return res.status(404).json({ message: '없는 유저' });
+         }
+
+
+        const alreadyfriend = user.friends.includes(friend._id); //이미 친구추가되어 있는지 체크 
+        if (alreadyfriend) {
+          return res.status(400).json({ message: '이미 친구추가됨' });
+        }
+
+        //친구 추가
+        user.friends.push(friend._id);
+        friend.friends.push(user._id);
+        await user.save();
+        await friend.save(); 
+        res.status(200).json({ message: '친구 추가 완료', friend: friend.username }); //친구 추가 완료 체크 
+
+
+  }catch (err) { //error 확인 
+    console.error(err);
+    res.status(500).json({ message: '서버 오류' });
+  }
+});
+
+
+
+
+//친구 목록 확인용 api
+router.post('/list', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    const user = await User.findOne({ username }); //user찾기 
+    if (!user) return res.status(404).json({ message: '사용자 없음' });
+
+    const friends = await User.find({ _id: { $in: user.friends } }, 'username');//friend 확인 
+    res.json({ friends: friends.map(f => f.username) });
+  } catch (err) {
+    res.status(500).json({ message: '서버 에러' });
+  }
+});
+
+
+//친구 제거 api
+router.post('/removefriend', async (req, res) => {
+  const { username, friendusername } = req.body;
+  try {
+    const user = await User.findOne({ username }); //user찾기 -> 기존과 동일 
+    const friend = await User.findOne({ username: friendusername });
+
+    if (!user || !friend) { //둘중에 데이터가 없는 경우 
+      return res.status(404).json({ message: '없는 유저' });
+    }
+
+    //배열에서 제거 
+    user.friends = user.friends.filter(fId => !fId.equals(friend._id)); //친구 id를 제거해서 새로 확인 
+    friend.friends = friend.friends.filter(fId => !fId.equals(user._id));
+    await user.save();
+    await friend.save(); 
+
+    res.status(200).json({ message: '친구 제거 완료', friend: friend.username });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '서버 오류' });
+  }
+});
+
+
 module.exports = router;
