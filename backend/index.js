@@ -10,7 +10,6 @@ const cors = require('cors'); // cors 상수 저장
 const mongoose=require('mongoose');
 const chat = require('./chatsetting');
 
-
 //mongodb 연결
 // https://koreankoder.tistory.com/15
 mongoose.connect('mongodb://localhost:27017/chatdb', {
@@ -25,11 +24,17 @@ const app = express(); // 서버에 필요한 기능인 미들웨어를 어플�
 const server= http.createServer(app);
 const socketio = require('socket.io'); //https://smaivnn.tistory.com/2
 const { timeStamp } = require('console');
+const authRoutes = require('./auth'); 
 const io = new socketio.Server(server, {
     cors: { origin: "*",methods: ['GET', 'POST'] } //모든 출처 허용, get,post 메서드 허용
 });
 
 app.use(cors()); //해당 cors 미들웨어 적용 
+app.use(express.json());//req.body에서 json형태의 데이터 읽기
+app.use('/api/auth', authRoutes); //https://velog.io/@rhftnqls/auth-%EB%AF%B8%EB%93%A4%EC%9B%A8%EC%96%B4-%EB%A7%8C%EB%93%A4%EA%B8%B0
+//auto routes 만들기
+
+
 
 
 io.on('connection', async(socket) => { //클라이언트가 socket.io로 연결한 경우
@@ -42,10 +47,10 @@ io.on('connection', async(socket) => { //클라이언트가 socket.io로 연결�
 
 
     // 채팅 메시지 수신
-    socket.on('chat message', async(msg) => { //클라이언트가 메시지를 보내는 경우 
-        console.log('받은 메시지:', msg); // 서버에 받은 메시지  저장
-        const saved= await chat.create({message:msg});
-        io.emit('chat message', saved.message); // 전체 클라이언트에게 메시지 전송 -> 모든 연결된 사용자 
+    socket.on('chat message', async({ nickname, message }) => { //클라이언트가 메시지를 보내는 경우 + nickname도 추가 
+        console.log('받은 메시지:', { nickname, message }); // 서버에 받은 메시지  저장
+        const saved= await chat.create({ nickname, message });
+        io.emit('chat message', { nickname: saved.nickname, message: saved.message }); // 전체 클라이언트에게 메시지 전송 -> 모든 연결된 사용자 
     });
 
     socket.on('disconnect', () => { //연결 종료 
@@ -60,27 +65,3 @@ const PORT = 3001;
 server.listen(PORT, () => {
     console.log("서버가 http://localhost:" + PORT + " 에서 실행중");
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const chatstruct = new mongoose.Schema({ //
+  nickname: String,
   message: String,
   timestamp: { type: Date, default: Date.now } //현재 시간 저장
 });
