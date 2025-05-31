@@ -19,6 +19,80 @@ function App(){
     const [friendname, setFriendName] = useState(''); //친구추가 입력값 상태
     const [friends, setFriends] = useState([]);//친구 목록 
 
+
+
+    //방 관련 설정
+    const [roomlist, setRoomList] = useState([]);
+    const [newroomname, setnewroomname] = useState('');
+
+
+
+//방 목록록
+    const fetchrooms = async () => {
+      const res = await fetch('http://localhost:3001/api/auth/rooms');
+      const data = await res.json();
+      if (res.ok) setRoomList(data.rooms.map(r => r.name));
+    };
+
+
+//방 생성
+  const handlecreateRoom = async () => {
+    if (!newroomname.trim()) return;
+
+    const res = await fetch('http://localhost:3001/api/auth/createroom', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newroomname })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert('방 생성 완료');
+      setnewroomname('');
+      fetchrooms();
+    } else {
+      alert(data.message);
+    }
+  };
+
+
+
+
+  //방 제거
+  const handleDeleteRoom = async (roomname) => {
+  if (!window.confirm(`'${roomname}' ㄹㅇ 삭제할까`)) return;//확인창
+
+  const res = await fetch('http://localhost:3001/api/auth/deleteroom', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: roomname })
+  }); //json 형태로 확인 
+
+  const data = await res.json();
+  if (res.ok) {
+    alert('삭제 완료');
+    fetchrooms();
+    if (roomid === roomname) setRoomid('room1'); //삭제된 방의 경우 기본방 room1으로 이동 
+  } else {
+    alert(data.message);
+  }
+};
+
+
+
+//dm
+const handleEnterDM = (friendname) => {
+  // 친구 이름과 내 이름을 정렬해서 방 이름을 항상 고정된 순서로 설정
+  const sorted = [user.username, friendname].sort();
+  const dmRoom = `DM_${sorted[0]}_${sorted[1]}`;
+  setRoomid(dmRoom); // 해당 DM 방으로 입장 -> dm으로 입장 
+};
+
+
+
+
+
+
 //친구 목록 가져오기
   const fetchFriends = async (u = user) => {
     if (!u || !u.username) return;
@@ -77,8 +151,11 @@ function App(){
         return () => { socket.off('chat message');
                        socket.off('chat history');
         }; //중복 등록되지 않도록 제거 
-    },[]);
+    },[roomid]);
     useEffect(() => {chatendRef.current?.scrollIntoView({ behavior: 'smooth' });}, [chat]);
+
+
+    useEffect(() => {if (user) {fetchFriends();fetchrooms(); }}, [user]);
 
 
 
@@ -97,6 +174,7 @@ function App(){
           const newUser = { username: loginform.username };
           setuser(newUser); // user 상태 설정
           fetchFriends(newUser); // user 값 넘겨주기
+          fetchrooms();
     } else {
       alert(data.message);
     }
@@ -174,11 +252,31 @@ return(
               로그아웃웃
             </button>
           </div>
-            <div style={{ marginBottom: '10px' }}>
-                <button onClick={() => setRoomid('room1')} style={{ marginRight: '5px' }}>방 1</button>
-                <button onClick={() => setRoomid('room2')} style={{ marginRight: '5px' }}>방 2</button>
-                <button onClick={() => setRoomid('room3')}>방 3</button>
-            </div>
+          {/*방 생성*/}
+             <div style={{ marginBottom: '15px' }}>
+              <input 
+              type="text" 
+              placeholder="새 방 이름 입력" 
+              value={newroomname} onChange={(e) => setnewroomname(e.target.value)} style={{ padding: '6px', width: '60%' }} />
+              <button onClick={handlecreateRoom} style={{ marginLeft: '10px' }}>방 생성 </button>
+             </div>
+
+
+            {/*방 목록 불러오기*/}
+           <div style={{ marginBottom: '20px' }}>
+            <h4>방 목록</h4>
+            {roomlist.map((room, idx) => (
+              <div key={idx} style={{ marginBottom: '5px' }}>
+                <button onClick={() => setRoomid(room)}>{room}</button>
+                <button onClick={() => handleDeleteRoom(room)} style={{ marginLeft: '8px', fontSize: '10px' }}>삭제</button>
+               </div>
+            ))}
+
+           </div>
+
+
+
+
 
             {/*친구추가 세팅*/}
             <div style={{ marginBottom: '15px' }}>
@@ -198,7 +296,11 @@ return(
                   {f} 
                   <button onClick={() => handleRemoveFriend(f)} style={{ marginLeft: '10px', padding: '2px 6px', fontSize: '12px' }} >
                      제거 
-                     </button> 
+                  </button>
+
+                  <button onClick={() => handleEnterDM(f)} style={{ marginLeft: '6px', padding: '2px 6px', fontSize: '12px' }}>
+                    dm
+                  </button>
                      </li> ))}
               </ul>
 

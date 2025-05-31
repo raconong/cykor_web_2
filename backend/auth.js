@@ -1,6 +1,7 @@
 const express = require('express'); //express 웹 프레임워크
 const router = express.Router(); //라우터 -> register,login 생성 
 const User = require('./usersetting');
+const Room = require('./roomsetting');
 
 
 //https://velog.io/@jihukimme/React-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EB%A1%9C%EA%B7%B8%EC%9D%B8-%ED%9A%8C%EC%9B%90%EA%B0%80%EC%9E%85-%EB%A1%9C%EA%B7%B8%EC%95%84%EC%9B%83-%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0
@@ -100,6 +101,52 @@ router.post('/removefriend', async (req, res) => {
     res.status(500).json({ message: '서버 오류' });
   }
 });
+
+
+
+
+//방 설정
+router.post('/createroom', async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ message: 'room 이름 입력 필요' }); //방 이름 받아오기
+  try {
+    const exist = await Room.findOne({ name });
+    if (exist) return res.status(400).json({ message: '이미 존재하는 방 이름입니다' });
+
+    const room = new Room({ name }); //새 방
+    await room.save();
+    res.status(201).json({ message: '방 생성 완료', room }); //신규 room 생성 확인인
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '서버 오류' });
+  }
+});
+
+router.get('/rooms', async (req, res) => {
+  try {
+    const rooms = await Room.find().sort({ createdAt: -1 }); //방 목록 받아오기기
+    res.json({ rooms });
+  } catch (err) {
+    res.status(500).json({ message: '방 목록 조회 오류' });
+  }
+});
+
+
+
+//방 삭제 코드 
+router.post('/deleteroom', async (req, res) => {
+  const { name } = req.body;
+  try {
+    const result = await Room.deleteOne({ name }); //이름 찾아서 지우기 
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: '방 확인 error' });
+    }
+    res.status(200).json({ message: '방 삭제 완료' });
+  } catch (err) {
+    res.status(500).json({ message: '서버 오류', error: err });
+  }
+});
+
 
 
 module.exports = router;
