@@ -19,6 +19,8 @@ function App(){
     const [friendname, setFriendName] = useState(''); //친구추가 입력값 상태
     const [friends, setFriends] = useState([]);//친구 목록 
 
+    const [profileFile, setProfileFile] = useState(null); // 이미지용 변수 추가 
+
 
 
     //방 관련 설정
@@ -214,6 +216,30 @@ const handleEnterDM = (friendname) => {
 
 
 
+
+
+
+
+  // 이미지 추가용 함수 
+  const handleUploadProfile = async () => {
+    if (!profileFile || !user) return; //유저가 맞지 않은 경우 return, 이미지가 존재하지 않는 경우 return 
+    const formData = new FormData(); //multipart/form-data 형태로 전송하기위해 객체 생성 
+    formData.append('profile', profileFile);
+    formData.append('username', user.username);
+    const res = await fetch('http://localhost:3001/api/auth/uploadprofile', {
+      method: 'POST', 
+      body: formData
+    }); 
+    const data = await res.json(); //전송 및 확인 
+    if (res.ok) {
+      alert('프로필 이미지 업로드 성공');
+      setuser({ ...user, profileImage: data.imageUrl }); 
+    } else {
+      alert(data.message);
+    }
+  };
+
+
     //페이지 
   if (!user) { //로그인 되어있는 경우 
     return (
@@ -272,6 +298,20 @@ return(
                </div>
             ))}
 
+           </div>
+
+
+
+           {/*프로필 이미지 설정 */}
+           <div style={{ marginBottom: '15px' }}>
+            <h4>프로필 이미지</h4>
+            {user.profileImage && ( 
+              <div style={{ marginBottom: '10px' }}> 
+              <img src={`http://localhost:3001${user.profileImage}`} 
+              alt="프로필" style={{ width: '80px', height: '80px', borderRadius: '50%' }} /> </div> )}
+
+              <input type="file" accept="image/*" onChange={(e) => setProfileFile(e.target.files[0])} />
+              <button onClick={handleUploadProfile} style={{ marginLeft: '10px' }}> 이미지 업로드 </button>
            </div>
 
 

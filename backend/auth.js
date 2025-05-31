@@ -1,7 +1,33 @@
 const express = require('express'); //express 웹 프레임워크
 const router = express.Router(); //라우터 -> register,login 생성 
+
+
+//이미지 추가용 
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+
 const User = require('./usersetting');
 const Room = require('./roomsetting');
+
+
+
+
+
+//프로필 이미지 저장 위치
+const uploaddir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploaddir)) fs.mkdirSync(uploaddir);
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploaddir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const upload = multer({ storage });
 
 
 //https://velog.io/@jihukimme/React-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EB%A1%9C%EA%B7%B8%EC%9D%B8-%ED%9A%8C%EC%9B%90%EA%B0%80%EC%9E%85-%EB%A1%9C%EA%B7%B8%EC%95%84%EC%9B%83-%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0
@@ -147,6 +173,27 @@ router.post('/deleteroom', async (req, res) => {
   }
 });
 
+
+
+
+//프로필 이미지 추가
+
+router.post('/uploadprofile', upload.single('profile'), async (req, res) => {
+  const { username } = req.body;
+  if (!req.file) return res.status(400).json({ message: '이미지 파일 필요' }); //이미지 파일을 받아오지 못한 경우 
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) return res.status(404).json({ message: '사용자 없음' }); //유저체크 
+
+    user.profileImage = `/uploads/${req.file.filename}`;
+    await user.save();
+
+    res.status(200).json({ message: '프로필 이미지 업로드 완료', imageUrl: user.profileImage });
+  } catch (err) {
+    res.status(500).json({ message: '서버 오류', error: err });
+  }
+});
 
 
 module.exports = router;

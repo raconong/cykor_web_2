@@ -8,6 +8,7 @@ const http = require('http'); //node js http
 const { Server } = require('socket.io');
 const cors = require('cors'); // cors 상수 저장
 const mongoose=require('mongoose');
+const path = require('path');
 const chat = require('./chatsetting');
 const authRoutes = require('./auth');
 
@@ -31,6 +32,7 @@ const io = new socketio.Server(server, {
 
 app.use(cors()); //해당 cors 미들웨어 적용 
 app.use(express.json());//req.body에서 json형태의 데이터 읽기
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); //정적 파일 획득
 app.use('/api/auth', authRoutes); //https://velog.io/@rhftnqls/auth-%EB%AF%B8%EB%93%A4%EC%9B%A8%EC%96%B4-%EB%A7%8C%EB%93%A4%EA%B8%B0
 //auto routes 만들기
 
