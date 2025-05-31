@@ -14,7 +14,7 @@ const authRoutes = require('./auth');
 
 //mongodb 연결
 // https://koreankoder.tistory.com/15
-mongoose.connect('mongodb://localhost:27017/chatdb', {
+mongoose.connect('mongodb://mongo:27017/chatdb', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(()=>console.log("connected"))

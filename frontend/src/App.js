@@ -31,7 +31,7 @@ function App(){
 
 //방 목록록
     const fetchrooms = async () => {
-      const res = await fetch('http://localhost:3001/api/auth/rooms');
+      const res = await fetch('/api/auth/rooms');
       const data = await res.json();
       if (res.ok) setRoomList(data.rooms.map(r => r.name));
     };
@@ -41,7 +41,7 @@ function App(){
   const handlecreateRoom = async () => {
     if (!newroomname.trim()) return;
 
-    const res = await fetch('http://localhost:3001/api/auth/createroom', {
+    const res = await fetch('/api/auth/createroom', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newroomname })
@@ -64,7 +64,7 @@ function App(){
   const handleDeleteRoom = async (roomname) => {
   if (!window.confirm(`'${roomname}' ㄹㅇ 삭제할까`)) return;//확인창
 
-  const res = await fetch('http://localhost:3001/api/auth/deleteroom', {
+  const res = await fetch('/api/auth/deleteroom', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: roomname })
@@ -98,7 +98,7 @@ const handleEnterDM = (friendname) => {
 //친구 목록 가져오기
   const fetchFriends = async (u = user) => {
     if (!u || !u.username) return;
-    const res = await fetch('http://localhost:3001/api/auth/list', {
+    const res = await fetch('/api/auth/list', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: u.username })
@@ -117,7 +117,7 @@ const handleEnterDM = (friendname) => {
 
   //친구 제거 함수
   const handleRemoveFriend = async (friendusername) => {
-  const res = await fetch('http://localhost:3001/api/auth/removefriend', {
+  const res = await fetch('/api/auth/removefriend', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: user.username, friendusername }) //json형태로 사용
@@ -164,7 +164,7 @@ const handleEnterDM = (friendname) => {
 //로그인 처리
   const handleAuth = async (e) => { //로그인/회원가입 처리 함수
     e.preventDefault();
-    const url = `http://localhost:3001/api/auth/${isRegister ? 'register' : 'login'}`;//isRegister가 true인 경우 register 페이지로 이동 
+    const url = `/api/auth/${isRegister ? 'register' : 'login'}`;//isRegister가 true인 경우 register 페이지로 이동 
     const res = await fetch(url, { //요청 전송 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }, //json 형태 
@@ -195,7 +195,7 @@ const handleEnterDM = (friendname) => {
 
   const handleaddfriend = async () => {
     if (!friendname.trim()) return;//friendname이 공백인 경우 그냥 return
-    const res = await fetch('http://localhost:3001/api/auth/addfriend', { // 친구 추가 api
+    const res = await fetch('/api/auth/addfriend', { // 친구 추가 api
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({//json형태로 전송 
@@ -226,7 +226,7 @@ const handleEnterDM = (friendname) => {
     const formData = new FormData(); //multipart/form-data 형태로 전송하기위해 객체 생성 
     formData.append('profile', profileFile);
     formData.append('username', user.username);
-    const res = await fetch('http://localhost:3001/api/auth/uploadprofile', {
+    const res = await fetch('/api/auth/uploadprofile', {
       method: 'POST', 
       body: formData
     }); 
